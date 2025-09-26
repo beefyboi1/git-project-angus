@@ -5,11 +5,31 @@ import java.security.MessageDigest;
 public class GIT {
 
     public static void main(String[] args) throws FileNotFoundException {
-        initRepo();
-        System.out.println(hashFile("README.md"));
+        blob("help.txt");
 
     }
     
+
+public static void blob(String path) throws FileNotFoundException {
+    File file = new File("git/objects/" + GIT.hashFile(path));
+    String input = "";
+     try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                input = input + line;
+            }
+            br.close();
+            BufferedWriter bw = new BufferedWriter(new FileWriter("git/objects/" + GIT.hashFile(path)));
+            bw.write(input);
+            bw.close();
+        }
+        catch(IOException e){}
+    
+
+    
+}
+
+
 public static String hashFile(String path) throws FileNotFoundException {
     //System.out.println("hello");
 
