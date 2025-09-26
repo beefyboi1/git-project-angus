@@ -22,6 +22,10 @@ public static void blob(String path) throws FileNotFoundException {
             BufferedWriter bw = new BufferedWriter(new FileWriter("git/objects/" + GIT.hashFile(path)));
             bw.write(input);
             bw.close();
+
+            BufferedWriter bw1 = new BufferedWriter(new FileWriter("git/objects/index", true));
+            bw1.write("" + GIT.hashFile(path) + " " + path + "\n");
+            bw1.close();
         }
         catch(IOException e){}
     
