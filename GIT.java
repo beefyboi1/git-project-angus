@@ -8,9 +8,41 @@ public class GIT {
 
     public static void main(String[] args) throws IOException, FileNotFoundException {
         //init repo stretch goal:
-        initRepo();
-        removeAll(Path.of("git"));
+        // initRepo();
+        // removeAll(Path.of("git"));
         // Files.delete(Path.of("git"));
+
+
+        // blob stretch goal
+        fullTest();
+        
+
+    }
+
+    public static void fullTest() throws IOException{
+        initRepo();
+        FileWriter dir = new FileWriter("help.txt");
+        dir.write("wassup");
+        dir.close();
+
+        FileWriter dir1 = new FileWriter("test.txt");
+        dir1.write("help");
+        dir1.close();
+
+
+
+        blob("help.txt");
+        blob("test.txt");
+
+        try{
+        if (Files.list(Path.of("git/objects")).count() == 0){
+            System.out.println("there are no blobs");
+        }
+        else{
+            System.out.println("Blobs exist");
+        }
+    }
+    catch(IOException e){}
     }
     
 public static void testInitRepo() throws IOException{
@@ -55,8 +87,10 @@ public static void removeAll(Path path) throws IOException {
                 e.printStackTrace();
             }
         });
+        // if (Files.list(path).count() > 0){
+        //     System.out.println(Files.list(path).toArray()[0].toString());
+        // }
     }
-    System.out.println(Files.list(path).count());
     Files.delete(path);
 }
 
