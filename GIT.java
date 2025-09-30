@@ -1,14 +1,65 @@
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.nio.file.Path;
 
 public class GIT {
 
-    public static void main(String[] args) throws FileNotFoundException {
-        blob("help.txt");
-
+    public static void main(String[] args) throws IOException, FileNotFoundException {
+        //init repo stretch goal:
+        initRepo();
+        removeAll(Path.of("git"));
+        // Files.delete(Path.of("git"));
     }
     
+public static void testInitRepo() throws IOException{
+    initRepo();
+        int check = 0;
+        File dir = new File("git");
+        if (!dir.exists()){
+        check = 1;
+        System.out.println("git directory was not made");
+        }
+        File dir1 = new File("git/objects");
+        if (!dir1.exists()){
+            check = 1;
+            System.out.println("objects directory was not made");
+        }
+
+        File file = new File("git/index");
+        if (!file.exists()){
+            check = 1;
+            System.out.println("index file was not made");
+        }
+
+        File file1 = new File("git/HEAD");
+        if (!file1.exists()){
+        check = 1;
+        System.out.println("HEAD file was not made");
+        }
+        if (check == 0){
+            System.out.println("all files were created by initRepo()");
+        }
+        if (dir.exists()){
+            removeAll(Path.of("git"));
+        }
+}
+
+public static void removeAll(Path path) throws IOException {
+    if (Files.isDirectory(path)){
+        Files.list(path).forEach(p -> {
+            try {
+                removeAll(p);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+    System.out.println(Files.list(path).count());
+    Files.delete(path);
+}
+
 
 public static void blob(String path) throws FileNotFoundException {
     File file = new File("git/objects/" + GIT.hashFile(path));
@@ -96,13 +147,13 @@ public static String hashFile(String path) throws FileNotFoundException {
         dir1.mkdir();
         }
 
-        File file = new File("git/objects/index");
+        File file = new File("git/index");
         if (!file.exists()){
         check = 1;
         file.createNewFile();
         }
 
-        File file1 = new File("git/objects/HEAD");
+        File file1 = new File("git/HEAD");
         if (!file1.exists()){
         check = 1;
         file1.createNewFile();
