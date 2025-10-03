@@ -8,14 +8,16 @@ public class GIT {
 
     public static void main(String[] args) throws IOException, FileNotFoundException {
         //init repo stretch goal:
-        // initRepo();
-        // removeAll(Path.of("git"));
+        // testInitRepo();
         // Files.delete(Path.of("git"));
 
 
         // blob stretch goal
-        fullTest();
-        
+        //fullTest();
+        initRepo();
+        blob("textFiles/test.txt");
+        blob("test.txt");
+        //removeAll(Path.of("git"));
 
     }
 
@@ -31,8 +33,8 @@ public class GIT {
 
 
 
-        blob("help.txt");
-        blob("test.txt");
+        blob("textFiles/help.txt");
+        blob("textFiles/test.txt");
 
         try{
         if (Files.list(Path.of("git/objects")).count() == 0){
@@ -80,13 +82,19 @@ public static void testInitRepo() throws IOException{
 
 public static void removeAll(Path path) throws IOException {
     if (Files.isDirectory(path)){
-        Files.list(path).forEach(p -> {
+
+
+
+
+        try (java.util.stream.Stream<Path> entries = Files.list(path)){
+        entries.forEach(p -> {
             try {
                 removeAll(p);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
+    }
         // if (Files.list(path).count() > 0){
         //     System.out.println(Files.list(path).toArray()[0].toString());
         // }
@@ -98,6 +106,7 @@ public static void removeAll(Path path) throws IOException {
 public static void blob(String path) throws FileNotFoundException {
     File file = new File("git/objects/" + GIT.hashFile(path));
     String input = "";
+    boolean check = false;
      try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -108,11 +117,31 @@ public static void blob(String path) throws FileNotFoundException {
             bw.write(input);
             bw.close();
 
-            BufferedWriter bw1 = new BufferedWriter(new FileWriter("git/objects/index", true));
+            String name = "" + GIT.hashFile(path) + " " + path;
+            try (BufferedReader br1 = new BufferedReader(new FileReader("git/index"))){
+            String text = "";
+            
+            while ((line = br1.readLine()) != null) {
+                text = line;
+                if (text.equals(name)){
+                    check = true;
+                    System.out.println("cannot add identical files");
+                }
+            }
+            br1.close();
+        }catch (Exception e){
+           System.out.println(e);
+        };
+            if (check == false){
+                
+            BufferedWriter bw1 = new BufferedWriter(new FileWriter("git/index", true));
             bw1.write("" + GIT.hashFile(path) + " " + path + "\n");
             bw1.close();
+            }
         }
-        catch(IOException e){}
+        catch(IOException e){
+            //System.out.println("here" + e);
+    }
     
 
     
