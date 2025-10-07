@@ -14,12 +14,78 @@ public class GIT {
 
         // blob stretch goal
         //fullTest();
+        removeAll(Path.of("git"));
         initRepo();
-        blob("textFiles/test.txt");
-        blob("test.txt");
-        //removeAll(Path.of("git"));
+        createTree("textFiles");
+        
 
+
+        // File example = new File("check.txt");
+        // example.createNewFile();
+        // example.renameTo(new File(("checker")));
+    
     }
+// public static String createTree(String path) throws IOException {
+//     // Step 1: Prepare tree content
+//     StringBuilder treeContent = new StringBuilder();
+//     File folder = new File(path);
+    
+//     for (File file : folder.listFiles()) {
+//         if (file.isFile()) {
+//             blob(file.getPath());  // generate blob
+//             String sha = GIT.hashFile(file.getPath());
+//             treeContent.append("blob ").append(sha).append(" ").append(file.getName()).append("\n");
+//         } else if (file.isDirectory()) {
+//             String subtreeSha = createTree(file.getPath());  // recursion
+//             treeContent.append("tree ").append(subtreeSha).append(" ").append(file.getName()).append("\n");
+//         }
+//     }
+
+//     // Step 2: Write tree content to temp file
+//     File tempFile = File.createTempFile("tree-", ".tmp");
+//     FileWriter writer = new FileWriter(tempFile);
+//     writer.write(treeContent.toString());
+//     writer.close();
+
+//     // Step 3: Hash the tree content
+//     String treeSha = GIT.hashFile(tempFile.getPath());
+
+//     // Step 4: Move temp file to objects folder with hash name
+//     File treeObject = new File("git/objects/" + treeSha);
+//     tempFile.renameTo(treeObject);
+
+//     return treeSha;
+// }
+
+
+
+    public static String createTree(String path) throws IOException{
+        String name = "folder";
+        File folder = new File(path);
+        // folder.mkdir();
+        File tree = new File(name);
+        FileWriter dir = new FileWriter(name);
+        
+        for (File file: folder.listFiles()){
+            if (!file.isDirectory()){
+                blob(file.getPath());
+                dir.write("blob " + GIT.hashFile(file.getPath()) + " " + file.getPath() + "\n");
+            }
+            if (file.isDirectory()){
+                dir.write("tree " + createTree(file.getPath()) + " " + file.getPath() + "\n");
+            }
+            
+        }
+        dir.close();
+        String finish = GIT.hashFile(name);
+        tree.renameTo(new File(("git/objects/" + finish)));
+        return finish;
+
+        
+    }
+
+
+
 
     public static void fullTest() throws IOException{
         initRepo();
