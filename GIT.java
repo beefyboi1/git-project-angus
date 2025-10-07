@@ -3,6 +3,10 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Comparator;
+
 
 public class GIT {
 
@@ -16,7 +20,12 @@ public class GIT {
         //fullTest();
         removeAll(Path.of("git"));
         initRepo();
-        createTree("textFiles");
+
+        blob("textFiles/extra/fanta.txt");
+        blob("textFiles/help.txt");
+        blob("textFiles/test.txt");
+        
+        indexTree();
         
 
 
@@ -25,58 +34,112 @@ public class GIT {
         // example.renameTo(new File(("checker")));
     
     }
-// public static String createTree(String path) throws IOException {
-//     // Step 1: Prepare tree content
-//     StringBuilder treeContent = new StringBuilder();
-//     File folder = new File(path);
-    
-//     for (File file : folder.listFiles()) {
-//         if (file.isFile()) {
-//             blob(file.getPath());  // generate blob
-//             String sha = GIT.hashFile(file.getPath());
-//             treeContent.append("blob ").append(sha).append(" ").append(file.getName()).append("\n");
-//         } else if (file.isDirectory()) {
-//             String subtreeSha = createTree(file.getPath());  // recursion
-//             treeContent.append("tree ").append(subtreeSha).append(" ").append(file.getName()).append("\n");
-//         }
-//     }
 
-//     // Step 2: Write tree content to temp file
-//     File tempFile = File.createTempFile("tree-", ".tmp");
-//     FileWriter writer = new FileWriter(tempFile);
-//     writer.write(treeContent.toString());
-//     writer.close();
 
-//     // Step 3: Hash the tree content
-//     String treeSha = GIT.hashFile(tempFile.getPath());
+    public static void indexTree() throws IOException{
+        int count = 0;
+        List<dirClass> workingList = new ArrayList<>();
+        List<String> entries = Files.readAllLines(Path.of("git/index"));
+        for (String line : entries) {
+            dirClass directories = new dirClass("blob", line.split(" ")[0], line.split(" ")[1]);
+            workingList.add(directories);
+        }
+        if (workingList.isEmpty()){
+            return;
+        }
+        while ((workingList.size() > 1 || checkList(workingList)) || count++ < 1) {
+            workingList.sort(Comparator.comparingInt(d -> d.toString().split("/").length).reversed()
+                    .thenComparing(d -> d.toString()));
+            String leafMost;
+            if (count == 1){
+                leafMost = workingList.get(0).toString();
+            }
+            else{
+                leafMost = workingList.get(0).toString().substring(0,
+                        workingList.get(0).toString().lastIndexOf("/"));
+            }
+            StringBuilder tree = new StringBuilder();
+            for (int i = 0; i < workingList.size(); i++) {
+                if (workingList.get(i).toString().startsWith(leafMost)) {
+                    if (count == 1){
+                        tree.append(workingList.get(i).type + " " + workingList.get(i).sha + " (root)");
+                    }
+                    else{
+                        tree.append(workingList.get(i).fullPathName());
+                    }
+                    tree.append("\n");
+                    workingList.remove(i);
+                    i--;
+                }
+            }
+            if (tree.length() > 0) {
+                tree.deleteCharAt(tree.length() - 1);
+            }
+            try (FileWriter fw = new FileWriter("temp")){
+                fw.write(tree.toString());
+            }
+            String sha = hashFile("temp");
+            Files.delete(Path.of("temp"));
+            Path blobPath = Path.of("git/objects/" + sha);
+ 
+            Files.createFile(blobPath);
+            try (FileWriter fw = new FileWriter(blobPath.toString())) {
+                fw.write(tree.toString());
+            }
+ 
+            dirClass treedir = new dirClass("tree", sha, leafMost);
+            workingList.add(treedir);
+        }
+    }
 
-//     // Step 4: Move temp file to objects folder with hash name
-//     File treeObject = new File("git/objects/" + treeSha);
-//     tempFile.renameTo(treeObject);
+    private static boolean checkList(List<dirClass> workingList){
+        if (workingList.isEmpty()){
+            return false;
+        }
+        return workingList.get(0).toString().contains("/");
+    }
 
-//     return treeSha;
-// }
+    private static class dirClass { // Credit to Darren
+        String type;
+        String sha;
+        String pathname;
+
+        public dirClass(String type, String sha, String pathname){
+            this.type = type;
+            this.sha = sha;
+            this.pathname = pathname;
+        }
+
+        @Override
+        public String toString() {
+            return pathname;
+        }
+
+        public String fullPathName(){
+            return type + " " + sha + " " + pathname;
+        }
+    }
 
 
 
     public static String createTree(String path) throws IOException{
-        String name = "folder";
+        String name = "folder" + String.valueOf(Math.random());
         File folder = new File(path);
         // folder.mkdir();
         File tree = new File(name);
-        FileWriter dir = new FileWriter(name);
+        FileWriter directories = new FileWriter(name);
         
         for (File file: folder.listFiles()){
             if (!file.isDirectory()){
                 blob(file.getPath());
-                dir.write("blob " + GIT.hashFile(file.getPath()) + " " + file.getPath() + "\n");
+                directories.write("blob " + GIT.hashFile(file.getPath()) + " " + file.getPath() + "\n");
             }
             if (file.isDirectory()){
-                dir.write("tree " + createTree(file.getPath()) + " " + file.getPath() + "\n");
+                directories.write("tree " + createTree(file.getPath()) + " " + file.getPath() + "\n");
             }
             
         }
-        dir.close();
+        directories.close();
         String finish = GIT.hashFile(name);
         tree.renameTo(new File(("git/objects/" + finish)));
         return finish;
@@ -89,9 +152,9 @@ public class GIT {
 
     public static void fullTest() throws IOException{
         initRepo();
-        FileWriter dir = new FileWriter("help.txt");
-        dir.write("wassup");
-        dir.close();
+        FileWriter directories = new FileWriter("help.txt");
+        directories.write("wassup");
+        directories.close();
 
         FileWriter dir1 = new FileWriter("test.txt");
         dir1.write("help");
@@ -116,8 +179,8 @@ public class GIT {
 public static void testInitRepo() throws IOException{
     initRepo();
         int check = 0;
-        File dir = new File("git");
-        if (!dir.exists()){
+        File directories = new File("git");
+        if (!directories.exists()){
         check = 1;
         System.out.println("git directory was not made");
         }
@@ -141,7 +204,7 @@ public static void testInitRepo() throws IOException{
         if (check == 0){
             System.out.println("all files were created by initRepo()");
         }
-        if (dir.exists()){
+        if (directories.exists()){
             removeAll(Path.of("git"));
         }
 }
@@ -266,10 +329,10 @@ public static String hashFile(String path) throws FileNotFoundException {
     public static void initRepo() throws FileNotFoundException {
         try{
         int check = 0;
-        File dir = new File("git");
-        if (!dir.exists()){
+        File directories = new File("git");
+        if (!directories.exists()){
         check = 1;
-        dir.mkdir();
+        directories.mkdir();
         }
         File dir1 = new File("git/objects");
         if (!dir1.exists()){
