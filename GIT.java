@@ -24,6 +24,8 @@ public class GIT {
         blob("textFiles/extra/fanta.txt");
         blob("textFiles/help.txt");
         blob("textFiles/test.txt");
+        // blob("test.txt");
+        //blob("test.txt");
         
         indexTree();
         
@@ -55,8 +57,7 @@ public class GIT {
                 leafMost = workingList.get(0).toString();
             }
             else{
-                leafMost = workingList.get(0).toString().substring(0,
-                        workingList.get(0).toString().lastIndexOf("/"));
+                leafMost = workingList.get(0).toString().substring(0, workingList.get(0).toString().lastIndexOf("/"));
             }
             StringBuilder tree = new StringBuilder();
             for (int i = 0; i < workingList.size(); i++) {
