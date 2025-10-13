@@ -3,6 +3,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Comparator;
@@ -21,6 +22,12 @@ public class GIT {
         removeAll(Path.of("git"));
         initRepo();
 
+        File file = new File("textFiles/extra/fanta.txt");
+        Files.write(Paths.get("textFiles/extra/fanta.txt"), "check".getBytes());
+        File file1 = new File("textFiles/help.txt");
+        Files.write(Paths.get("textFiles/help.txt"), "wassup".getBytes());
+        File file2 = new File("textFiles/test.txt");
+        Files.write(Paths.get("textFiles/test.txt"), "help".getBytes());
         blob("textFiles/extra/fanta.txt");
         blob("textFiles/help.txt");
         blob("textFiles/test.txt");
