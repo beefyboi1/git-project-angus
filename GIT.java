@@ -1,11 +1,11 @@
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
-import java.security.MessageDigest;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 
 public class GIT {
@@ -18,6 +18,7 @@ public class GIT {
 
         // blob stretch goal
         //fullTest();
+        // removeAll(Path.of("git"));
         removeAll(Path.of("git"));
         initRepo();
 
@@ -357,7 +358,9 @@ public static String hashFile(String path) throws FileNotFoundException {
             System.out.println("Git Repository Already Exists");
         }
     }
-    catch (Exception e){}
+    catch (Exception e) {
+    e.printStackTrace();
+    }
     }
 
 
