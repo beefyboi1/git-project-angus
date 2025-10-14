@@ -36,7 +36,7 @@ public class GIT {
 
     }
     
-    public static void commit(String author, String message) throws IOException {
+    public static String commit(String author, String message) throws IOException {
         String treeHash = indexTree();
         String parent = Files.readAllLines(Paths.get("git/HEAD")).isEmpty() ? "" : Files.readAllLines(Paths.get("git/HEAD")).get(0);
         String dateTime = LocalDateTime.now().toString();
@@ -50,6 +50,7 @@ public class GIT {
         Files.createFile(Path.of("git/objects/" + sha1));
         Files.write(Path.of("git/objects/" + sha1), sb.toString().getBytes());
         Files.write(Path.of("git/HEAD"), sha1.getBytes());
+        return sha1;
     }
 
 
@@ -380,17 +381,52 @@ public static void initRepo() throws FileNotFoundException {
 }
     
 private static String sha1(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] hashBytes = md.digest(input.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+    try {
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] hashBytes = md.digest(input.getBytes());
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashBytes) {
+            sb.append(String.format("%02x", b));
         }
+        return sb.toString();
+    } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+    }
+}
+    
+    @SuppressWarnings("CallToPrintStackTrace")
+    public static void rmdir(Path path) throws IOException {
+        if (path.toString().endsWith(".java") || path.toString().contains("git") || path.toString().contains("README.md")) {
+            return;
+        }
+        if (Files.isDirectory(path)) {
+            Files.list(path).forEach(p -> {
+                try {
+                    rmdir(p);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        Files.delete(path);
+    }
+
+    @SuppressWarnings("CallToPrintStackTrace")
+    public static void cleardir(Path path) throws IOException {
+        if (path.toString().endsWith(".java") || path.toString().contains("git") || path.toString().contains("README.md")) {
+            return;
+        }
+        if (Files.isDirectory(path)) {
+            Files.list(path).forEach(p -> {
+                try {
+                    rmdir(p);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            return;
+        }
+        Files.delete(path);
     }
 
 
