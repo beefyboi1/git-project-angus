@@ -2,7 +2,10 @@ import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -15,29 +18,43 @@ public class GIT {
         // testInitRepo();
         // Files.delete(Path.of("git"));
 
-
         // blob stretch goal
         //fullTest();
         // removeAll(Path.of("git"));
         removeAll(Path.of("git"));
         initRepo();
 
-        blob("textFiles/extra/fanta.txt");
-        blob("textFiles/help.txt");
-        blob("textFiles/test.txt");
-        
-        indexTree();
-        
+        blob("repo/extra/fanta.txt");
+        blob("repo/help.txt");
+        blob("repo/test.txt");
 
+        commit("darren", "test");
 
         // File example = new File("check.txt");
         // example.createNewFile();
         // example.renameTo(new File(("checker")));
+
+    }
     
+    public static void commit(String author, String message) throws IOException {
+        String treeHash = indexTree();
+        String parent = Files.readAllLines(Paths.get("git/HEAD")).isEmpty() ? "" : Files.readAllLines(Paths.get("git/HEAD")).get(0);
+        String dateTime = LocalDateTime.now().toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("tree: ").append(treeHash).append("\n");
+        sb.append("parent: ").append(parent).append("\n");
+        sb.append("author: ").append(author).append("\n");
+        sb.append("date: ").append(dateTime).append("\n");
+        sb.append("message: ").append(message);
+        String sha1 = sha1(sb.toString());
+        Files.createFile(Path.of("git/objects/" + sha1));
+        Files.write(Path.of("git/objects/" + sha1), sb.toString().getBytes());
+        Files.write(Path.of("git/HEAD"), sha1.getBytes());
     }
 
 
-    public static void indexTree() throws IOException{
+    public static String indexTree() throws IOException {
+        String finalBlobPath = "";
         int count = 0;
         List<dirClass> workingList = new ArrayList<>();
         List<String> entries = Files.readAllLines(Path.of("git/index"));
@@ -46,26 +63,25 @@ public class GIT {
             workingList.add(directories);
         }
         if (workingList.isEmpty()){
-            return;
+            return finalBlobPath;
         }
         while ((workingList.size() > 1 || checkList(workingList)) || count++ < 1) {
             workingList.sort(Comparator.comparingInt(d -> d.toString().split("/").length).reversed()
                     .thenComparing(d -> d.toString()));
             String leafMost;
-            if (count == 1){
+            if (count == 1) {
                 leafMost = workingList.get(0).toString();
-            }
-            else{
+            } else {
                 leafMost = workingList.get(0).toString().substring(0,
                         workingList.get(0).toString().lastIndexOf("/"));
             }
             StringBuilder tree = new StringBuilder();
             for (int i = 0; i < workingList.size(); i++) {
                 if (workingList.get(i).toString().startsWith(leafMost)) {
-                    if (count == 1){
-                        tree.append(workingList.get(i).type + " " + workingList.get(i).sha + " (root)");
-                    }
-                    else{
+                    if (count == 1) {
+                        tree.append(workingList.get(i).type + " " + workingList.get(i).sha + " "
+                                + workingList.get(0).toString());
+                    } else {
                         tree.append(workingList.get(i).fullPathName());
                     }
                     tree.append("\n");
@@ -76,21 +92,23 @@ public class GIT {
             if (tree.length() > 0) {
                 tree.deleteCharAt(tree.length() - 1);
             }
-            try (FileWriter fw = new FileWriter("temp")){
+            try (FileWriter fw = new FileWriter("temp")) {
                 fw.write(tree.toString());
             }
             String sha = hashFile("temp");
             Files.delete(Path.of("temp"));
             Path blobPath = Path.of("git/objects/" + sha);
- 
+            finalBlobPath = sha;
+
             Files.createFile(blobPath);
             try (FileWriter fw = new FileWriter(blobPath.toString())) {
                 fw.write(tree.toString());
             }
- 
+
             dirClass treedir = new dirClass("tree", sha, leafMost);
             workingList.add(treedir);
         }
+        return finalBlobPath;
     }
 
     private static boolean checkList(List<dirClass> workingList){
@@ -327,40 +345,52 @@ public static String hashFile(String path) throws FileNotFoundException {
     return null;
 }
 
-    public static void initRepo() throws FileNotFoundException {
-        try{
+public static void initRepo() throws FileNotFoundException {
+    try {
         int check = 0;
         File directories = new File("git");
-        if (!directories.exists()){
-        check = 1;
-        directories.mkdir();
+        if (!directories.exists()) {
+            check = 1;
+            directories.mkdir();
         }
         File dir1 = new File("git/objects");
-        if (!dir1.exists()){
-        dir1.mkdir();
+        if (!dir1.exists()) {
+            dir1.mkdir();
         }
 
         File file = new File("git/index");
-        if (!file.exists()){
-        check = 1;
-        file.createNewFile();
+        if (!file.exists()) {
+            check = 1;
+            file.createNewFile();
         }
 
         File file1 = new File("git/HEAD");
-        if (!file1.exists()){
-        check = 1;
-        file1.createNewFile();
+        if (!file1.exists()) {
+            check = 1;
+            file1.createNewFile();
         }
-        if (check == 1){
-        System.out.println("Git Repository Created");
-        }
-        else{
+        if (check == 1) {
+            System.out.println("Git Repository Created");
+        } else {
             System.out.println("Git Repository Already Exists");
         }
+    } catch (Exception e) {
+        e.printStackTrace();
     }
-    catch (Exception e) {
-    e.printStackTrace();
-    }
+}
+    
+private static String sha1(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] hashBytes = md.digest(input.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
